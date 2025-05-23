@@ -1,52 +1,70 @@
-# Prerequisites
-*.d
+# PlatformIO
+.pio/
+.vscode/
+*.ini.bak
+*.pyc
+__pycache__/
 
-# Object files
-*.o
-*.ko
-*.obj
+# Arduino
 *.elf
-
-# Linker output
-*.ilk
+*.hex
+*.bin
+*.eep
 *.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
+*.d
+*.dep
+*.o
 *.a
-*.la
-*.lo
+*.sdf
+*.suo
+*.ino.*
+*.cproj
+*.cppproj
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+# Mac OS
+.DS_Store
 
-# Executables
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Build output
+build/
+*.obj
 *.exe
 *.out
-*.app
-*.i*86
-*.x86_64
-*.hex
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+# Compiled files
+*.class
+*.pyc
+*.pyo
+*.pyd
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# Arduino libraries that shouldn't be committed
+lib_deps/
+
+# Binaries and firmware
+firmware*.*
+*.uf2
+
+# Env/Secrets
+.env
+*.secret
+secrets.json
+
+# CLion / JetBrains
+.idea/
+
+# VSCode
+.vscode/
+
+# Backup
+*~ 
