@@ -1,10 +1,16 @@
 #include "components/pn532.h"
 
-PN532Component::PN532Component(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
-    : nfc(sck, miso, mosi, ss) {}
+PN532Component::PN532Component(uint8_t irq, uint8_t reset)
+    : nfc(irq, reset) {}
 
 void PN532Component::begin() {
     nfc.begin();
+    uint32_t versiondata = nfc.getFirmwareVersion();
+    if (!versiondata) {
+        Serial.println("Didn't find PN532 board");
+        while (1); // Halt
+    }
+    Serial.print("Found chip PN5"); Serial.println((versiondata >> 24) & 0xFF, HEX);
     nfc.SAMConfig();
 }
 

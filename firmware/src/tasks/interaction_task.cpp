@@ -7,44 +7,72 @@
 
 #define BUTTON_PIN 18
 
-static PN532Component nfc(18, 19, 23, 5);
+// Updated to use I2C-based constructor
+static PN532Component nfc(2, 3); // IRQ and RESET pins
 static PN532Controller controller(nfc);
 
 enum NFCMode { READ, WRITE };
 static NFCMode nfcMode = READ;
 
-static void interactionTask(void *pvParameters) {
-    bool lastButtonState = HIGH;
+// static void interactionTask() { // Removed FreeRTOS-specific parameters
+//     bool lastButtonState = HIGH;
+//     while (true) {
+//         int buttonState = digitalRead(BUTTON_PIN);
+
+//         // Toggle mode on button press
+//         if (buttonState == LOW && lastButtonState == HIGH) {
+//             nfcMode = (nfcMode == READ) ? WRITE : READ;
+//             Serial.print("NFC mode changed to: ");
+//             Serial.println(nfcMode == READ ? "READ" : "WRITE");
+//             delay(300); // Replaced vTaskDelay with delay
+//         }
+
+//         uint8_t uid[7];
+//         uint8_t uidLength;
+//         if (nfc.detectCard(uid, &uidLength)) {
+//             if (nfcMode == WRITE) {
+//                 Serial.println("Writing Beer Bear to NFC tag...");
+//                 writeCharacterToNFC(controller, "Beer Bear", 420, "red");
+//                 Serial.println("Write done.");
+//             } else {
+//                 String name, color;
+//                 int level;
+//                 if (readCharacterFromNFC(controller, name, level, color)) {
+//                     Serial.print("Character: ");
+//                     Serial.print(name);
+//                     Serial.print(", Level: ");
+//                     Serial.print(level);
+//                     Serial.print(", Color: ");
+//                     Serial.println(color);
+//                     portalReactToCharacter(name, level, color);
+//                 }
+//             }
+//             delay(1000); // Replaced vTaskDelay with delay
+//         }
+
+//         lastButtonState = buttonState;
+//         delay(100); // Replaced vTaskDelay with delay
+//     }
+// }
+
+static void interactionTask() {
+    uint8_t uid[7];
+    uint8_t uidLength;
+
     while (true) {
-        int buttonState = digitalRead(BUTTON_PIN);
-
-        // Toggle mode on button press
-        if (buttonState == LOW && lastButtonState == HIGH) {
-            nfcMode = (nfcMode == READ) ? WRITE : READ;
-            Serial.printf("NFC mode changed to: %s\n", nfcMode == READ ? "READ" : "WRITE");
-            vTaskDelay(pdMS_TO_TICKS(300));
-        }
-
-        uint8_t uid[7];
-        uint8_t uidLength;
         if (nfc.detectCard(uid, &uidLength)) {
-            if (nfcMode == WRITE) {
-                Serial.println("Writing Beer Bear to NFC tag...");
-                writeCharacterToNFC(controller, "Beer Bear", 420, "red");
-                Serial.println("Write done.");
-            } else {
-                String name, color;
-                int level;
-                if (readCharacterFromNFC(controller, name, level, color)) {
-                    Serial.printf("Character: %s, Level: %d, Color: %s\n", name.c_str(), level, color.c_str());
-                    portalReactToCharacter(name, level, color);
-                }
+            Serial.print("Found a card! UID Length: ");
+            Serial.print(uidLength, DEC);
+            Serial.print(" bytes. UID Value: ");
+            for (uint8_t i = 0; i < uidLength; i++) {
+                Serial.print(" 0x");
+                Serial.print(uid[i], HEX);
             }
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            Serial.println("");
+        } else {
+            Serial.println("No card detected.");
         }
-
-        lastButtonState = buttonState;
-        vTaskDelay(pdMS_TO_TICKS(100));
+        delay(1000);
     }
 }
 
@@ -53,5 +81,6 @@ void initializeInteractionTask() {
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     setupPortal();
 
-    xTaskCreatePinnedToCore(interactionTask, "InteractionTask", 4096, NULL, 1, NULL, 1);
+    // Removed xTaskCreatePinnedToCore, as it's not supported on AVR
+    interactionTask(); // Directly call the task function
 }
