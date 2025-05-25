@@ -1,4 +1,6 @@
-# Structure 
+# Firmware Stuff You Might Want To Know
+
+## Structure 
 
 firmware/
 ├── include/
@@ -22,3 +24,32 @@ firmware/
 │   ├── tasks/
 │   │   └── interaction_task.cpp
 │   └── main.cpp
+
+
+## Important notes
+### NFC Reading Guidelines
+#### Writing to NFC Tags
+- **Data Format:** The JSON data is compressed and written as a string to the tag memory starting at page 4.
+- **Page Size:** Each NTAG2xx memory page holds 4 bytes. JSON string is split into 4-byte chunks.
+- **Padding:** If the last chunk is less than 4 bytes, pad with spaces (`' '`).
+- **Null Termination (Optional):** Write a null terminator (`\0`) at the next page after JSON to mark the end of data cleanly.
+- **Clearing Memory:** Before writing, clear pages 4 through 39 to remove residual data.
+
+#### Reading JSON Data from NFC Tag
+
+- **Read All Relevant Pages:** Read all tag pages where data is stored (commonly pages 4 to 39).
+- **Concatenate Bytes:** Concatenate the bytes from each page into a single string.
+- **Filter Printable Characters:** Only append ASCII printable characters (32 to 126) to avoid corrupt data.
+- **Handle Partial Reads:** Some pages might fail to read — skip or handle gracefully.
+- **Detect End of JSON:** If a null terminator or other sentinel is found, stop reading further.
+- **JSON Parsing:** Use a JSON parser (like ArduinoJson) to deserialize the concatenated string.
+- **Buffer Size:** Ensure the JSON deserialization buffer is large enough for expected data.
+
+#### Common Issues & Tips
+
+- **Tag Compatibility:** Only NTAG2xx-compatible tags support `ntag2xx_WritePage`. Check compatibility before writing.
+- **Block/Page vs Sector:** NTAG2xx uses pages (4 bytes each), MIFARE Classic uses blocks (16 bytes each). Use the correct read/write functions accordingly.
+- **Reading Errors:** Reading may fail on certain pages due to tag protection or invalid areas. Handle errors gracefully.
+- **Data Corruption:** Ensure no trailing garbage is appended clear memory before writing.
+- **JSON Parsing Errors:** `IncompleteInput` or `InvalidInput` errors usually mean the full JSON string wasnt read.
+- **UID Length:** UID can be 4 to 7 bytes — always use `uidLength` for safe access.

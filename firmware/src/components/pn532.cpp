@@ -8,7 +8,7 @@ void PN532Component::begin() {
     uint32_t versiondata = nfc.getFirmwareVersion();
     if (!versiondata) {
         Serial.println("Didn't find PN532 board");
-        while (1); // Halt
+        while (1);
     }
     Serial.print("Found chip PN5"); Serial.println((versiondata >> 24) & 0xFF, HEX);
     nfc.SAMConfig();
@@ -18,7 +18,6 @@ bool PN532Component::detectCard(uint8_t *uid, uint8_t *uidLength) {
     return nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, uidLength);
 }
 
-// Use NTAG2xx-compatible methods
 bool PN532Component::readBlock(uint8_t pageNumber, uint8_t *data) {
     return nfc.ntag2xx_ReadPage(pageNumber, data);
 }
