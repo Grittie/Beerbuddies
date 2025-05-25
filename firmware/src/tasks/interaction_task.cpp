@@ -7,53 +7,11 @@
 
 #define BUTTON_PIN 18
 
-// Updated to use I2C-based constructor
-static PN532Component nfc(2, 3); // IRQ and RESET pins
+static PN532Component nfc(2, 3);
 static PN532Controller controller(nfc);
 
 enum NFCMode { READ, WRITE };
 static NFCMode nfcMode = READ;
-
-// static void interactionTask() { // Removed FreeRTOS-specific parameters
-//     bool lastButtonState = HIGH;
-//     while (true) {
-//         int buttonState = digitalRead(BUTTON_PIN);
-
-//         // Toggle mode on button press
-//         if (buttonState == LOW && lastButtonState == HIGH) {
-//             nfcMode = (nfcMode == READ) ? WRITE : READ;
-//             Serial.print("NFC mode changed to: ");
-//             Serial.println(nfcMode == READ ? "READ" : "WRITE");
-//             delay(300); // Replaced vTaskDelay with delay
-//         }
-
-//         uint8_t uid[7];
-//         uint8_t uidLength;
-//         if (nfc.detectCard(uid, &uidLength)) {
-//             if (nfcMode == WRITE) {
-//                 Serial.println("Writing Beer Bear to NFC tag...");
-//                 writeCharacterToNFC(controller, "Beer Bear", 420, "red");
-//                 Serial.println("Write done.");
-//             } else {
-//                 String name, color;
-//                 int level;
-//                 if (readCharacterFromNFC(controller, name, level, color)) {
-//                     Serial.print("Character: ");
-//                     Serial.print(name);
-//                     Serial.print(", Level: ");
-//                     Serial.print(level);
-//                     Serial.print(", Color: ");
-//                     Serial.println(color);
-//                     portalReactToCharacter(name, level, color);
-//                 }
-//             }
-//             delay(1000); // Replaced vTaskDelay with delay
-//         }
-
-//         lastButtonState = buttonState;
-//         delay(100); // Replaced vTaskDelay with delay
-//     }
-// }
 
 static void interactionTask() {
     uint8_t uid[7];
@@ -68,10 +26,42 @@ static void interactionTask() {
                 Serial.print(" 0x");
                 Serial.print(uid[i], HEX);
             }
-            Serial.println("");
+            Serial.println();
+
+            String cardData = "";
+            uint8_t data[4];
+            for (uint8_t page = 4; page <= 129; page++) {
+                if (nfc.readBlock(page, data)) {
+                    for (uint8_t i = 0; i < 4; i++) {
+                        char c = (char)data[i];
+                        if (c == '\0') break; // Optional: stop early if null terminator
+                        if (c >= 32 && c <= 126) {
+                            cardData += c;
+                        }
+                    }
+                } else {
+                    Serial.print("Failed to read page ");
+                    Serial.println(page);
+                }
+            }
+
+            Serial.println("Raw Card Data:");
+            Serial.println(cardData);
+
+            StaticJsonDocument<512> doc; // Consider increasing for longer JSON
+            DeserializationError error = deserializeJson(doc, cardData);
+            if (!error) {
+                Serial.println("Parsed JSON Data:");
+                serializeJsonPretty(doc, Serial);
+                Serial.println();
+            } else {
+                Serial.print("Failed to parse JSON: ");
+                Serial.println(error.c_str());
+            }
         } else {
             Serial.println("No card detected.");
         }
+
         delay(1000);
     }
 }
@@ -81,6 +71,5 @@ void initializeInteractionTask() {
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     setupPortal();
 
-    // Removed xTaskCreatePinnedToCore, as it's not supported on AVR
-    interactionTask(); // Directly call the task function
+    interactionTask();
 }

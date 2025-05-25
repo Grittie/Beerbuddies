@@ -18,10 +18,11 @@ bool PN532Component::detectCard(uint8_t *uid, uint8_t *uidLength) {
     return nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, uidLength);
 }
 
-bool PN532Component::readBlock(uint8_t blockNumber, uint8_t *data) {
-    return nfc.mifareclassic_ReadDataBlock(blockNumber, data);
+// Use NTAG2xx-compatible methods
+bool PN532Component::readBlock(uint8_t pageNumber, uint8_t *data) {
+    return nfc.ntag2xx_ReadPage(pageNumber, data);
 }
 
-bool PN532Component::writeBlock(uint8_t blockNumber, const uint8_t *data) {
-    return nfc.mifareclassic_WriteDataBlock(blockNumber, (uint8_t *)data);
+bool PN532Component::writeBlock(uint8_t pageNumber, const uint8_t *data) {
+    return nfc.ntag2xx_WritePage(pageNumber, const_cast<uint8_t *>(data));
 }
