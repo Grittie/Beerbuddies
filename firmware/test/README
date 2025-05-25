@@ -1,11 +1,24 @@
+# Structure 
 
-This directory is intended for PlatformIO Test Runner and project tests.
-
-Unit Testing is a software testing method by which individual units of
-source code, sets of one or more MCU program modules together with associated
-control data, usage procedures, and operating procedures, are tested to
-determine whether they are fit for use. Unit testing finds problems early
-in the development cycle.
-
-More information about PlatformIO Unit Testing:
-- https://docs.platformio.org/en/latest/advanced/unit-testing/index.html
+firmware/
+├── include/
+│   ├── components/
+│   │   └── pn532.h
+│   ├── controllers/
+│   │   ├── pn532_controller.h
+│   │   └── portal_controller.h
+│   ├── modules/
+│   │   └── character_module.h
+│   └── tasks/
+│       └── interaction_task.h
+├── src/
+│   ├── components/
+│   │   └── pn532.cpp
+│   ├── controllers/
+│   │   ├── pn532_controller.cpp
+│   │   └── portal_controller.cpp
+│   ├── modules/
+│   │   └── character_module.cpp
+│   ├── tasks/
+│   │   └── interaction_task.cpp
+│   └── main.cpp
