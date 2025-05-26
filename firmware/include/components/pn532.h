@@ -8,6 +8,7 @@ public:
     bool detectCard(uint8_t *uid, uint8_t *uidLength);
     bool readBlock(uint8_t pageNumber, uint8_t *data);
     bool writeBlock(uint8_t pageNumber, const uint8_t *data);
+    void releaseCard();
 
 private:
     Adafruit_PN532 nfc;
