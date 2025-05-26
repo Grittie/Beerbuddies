@@ -1,18 +1,14 @@
 #include <Arduino.h>
+#include "tasks/interaction_task.h"
 
-// put function declarations here:
-int myFunction(int, int);
+
+// this is not my finest work :)
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+    Serial.begin(115200);
+    Serial.println("Starting NFC Interaction Task...");
+    initializeInteractionTask();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
 }
