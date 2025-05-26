@@ -59,6 +59,7 @@ static void interactionTask()
                 {
                     Serial.print("Failed to read page ");
                     Serial.println(page);
+                    break;
                 }
             }
 
