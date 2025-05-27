@@ -40,7 +40,7 @@ bool PN532Component::writeBlock(uint8_t pageNumber, const uint8_t *data) {
 }
 
 void PN532Component::releaseCard() {
-    nfc.SAMConfig(); // Reinitialize to reset detection
+    nfc.SAMConfig();
     cardPreviouslyDetected = false;
     Serial.println("Card detection state reset.");
 }

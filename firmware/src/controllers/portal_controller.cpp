@@ -11,7 +11,6 @@ void PortalController::begin() {
 
 void PortalController::reactToCharacter(const String &name, int level, const String &color) {
     handleLEDs(color);
-    handleAudio(name);
 }
 
 void PortalController::handleLEDs(const String &color) {
@@ -26,16 +25,6 @@ void PortalController::handleLEDs(const String &color) {
     } else {
         Serial.println("No specific color. Turning off LEDs.");
         turnOffLEDs();
-    }
-}
-
-void PortalController::handleAudio(const String &name) {
-    if (name == "BeerBear") {
-        Serial.println("Beer Bear detected! Playing sound...");
-    } else if (name == "GrittieBear") {
-        Serial.println("Grittie Bear detected! Playing different sound...");
-    } else {
-        Serial.println("Unknown character detected. No special effects.");
     }
 }
 

@@ -9,12 +9,12 @@ void DFPlayerComponent::begin() {
         Serial.println(F("DFPlayer Mini initialization failed!"));
         Serial.println(F("1. Check the DFPlayer Mini connections"));
         Serial.println(F("2. Insert an SD card"));
-        while (true); // Halt execution
+        while (true);
     }
     Serial.println(F("DFPlayer Mini initialized successfully."));
-    player.setTimeOut(500);  // Set timeout to 500ms
-    player.volume(25);       // Set volume (0-30)
-    player.EQ(DFPLAYER_EQ_NORMAL); // Set equalization to normal
+    player.setTimeOut(500);
+    player.volume(25); // (0-30)
+    player.EQ(DFPLAYER_EQ_NORMAL);
 }
 
 void DFPlayerComponent::testFileCount(int folder) {
