@@ -11,9 +11,11 @@
 #define NFC_START_PAGE 4
 #define NFC_END_PAGE 129
 #define JSON_DOC_SIZE 512
+#define CARD_COOLDOWN_TIME 5000
 
 static PN532Component nfc(2, 3);
 static PN532Controller controller(nfc);
+static PortalController portalController(6, 8);
 
 enum NFCMode
 {
@@ -89,8 +91,8 @@ void processCardData(const String &cardData)
         int level = doc["level"] | 0;
         String color = doc["color"] | "";
 
-        // React to the character using portal logic
-        portalReactToCharacter(name, level, color);
+        // Directly call the portal logic
+        portalController.reactToCharacter(name, level, color);
     }
     else
     {
@@ -115,7 +117,7 @@ static void interactionTask()
             if (uidLength == lastUidLength && memcmp(uid, lastUid, uidLength) == 0)
             {
                 unsigned long currentTime = millis();
-                if (currentTime - lastTagTime >= 5000)
+                if (currentTime - lastTagTime >= CARD_COOLDOWN_TIME)
                 {
                     Serial.println("Same tag detected but took more than 5 seconds, processing again.");
                     lastTagTime = currentTime;
@@ -123,6 +125,8 @@ static void interactionTask()
 
                     memcpy(lastUid, uid, uidLength);
                     lastUidLength = uidLength;
+
+                    delay(1000);
 
                     String cardData = readCardData();
                     processCardData(cardData);
@@ -146,7 +150,7 @@ static void interactionTask()
 
             lastTagTime = millis();
 
-            delay(500);
+            delay(1000);
 
             String cardData = readCardData();
             processCardData(cardData);
@@ -160,8 +164,8 @@ static void interactionTask()
 void initializeInteractionTask()
 {
     nfc.begin();
+    portalController.begin(); // Initialize the portal controller
     pinMode(BUTTON_PIN, INPUT_PULLUP);
-    setupPortal();
 
     interactionTask();
 }
