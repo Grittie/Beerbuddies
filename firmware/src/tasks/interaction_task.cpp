@@ -15,7 +15,7 @@
 
 static PN532Component nfc(2, 3);
 static PN532Controller controller(nfc);
-static PortalController portalController(6, 7);
+static PortalController portalController(6, 8);
 
 enum NFCMode
 {
