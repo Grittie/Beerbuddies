@@ -53,3 +53,22 @@ firmware/
 - **Data Corruption:** Ensure no trailing garbage is appended clear memory before writing.
 - **JSON Parsing Errors:** `IncompleteInput` or `InvalidInput` errors usually mean the full JSON string wasnt read.
 - **UID Length:** UID can be 4 to 7 bytes — always use `uidLength` for safe access.
+
+
+### MP3 Playback Guidelines
+
+#### Overview
+The firmware includes support for MP3 playback using the DFPlayer Mini module. This functionality is used to play audio files associated with specific characters detected via NFC.
+
+#### Hardware Requirements
+- **DFPlayer Mini Module**: Ensure the module is connected to the correct RX and TX pins as defined in the firmware.
+- **MicroSD Card**: Insert a formatted microSD card with audio files organized into folders.
+
+#### File Organization
+- Audio files must be stored in folders on the microSD card.
+- Folder names should correspond to the characters ID (e.g., folder `1` for character ID `1`).
+- Files within each folder should be named sequentially (e.g., `0001.mp3`, `0002.mp3`, etc.).
+
+#### Configuration
+- **Pins**: The RX and TX pins for the DFPlayer Mini are defined in the firmware (`DFPlayerComponent` constructor). Update these if your hardware setup differs.
+- **Volume**: The default volume is set to `25` (range: 0-30). Adjust this in the `DFPlayerComponent::begin()` method if needed.
