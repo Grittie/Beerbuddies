@@ -4,18 +4,22 @@
 #include "modules/character_module.h"
 #include "controllers/portal_controller.h"
 #include "tasks/interaction_task.h"
+#include "components/dfplayer.h"
+#include "controllers/dfplayer_controller.h"
 
 #define BUTTON_PIN 18
 #define NFC_UID_MAX_LENGTH 7
 #define NFC_BLOCK_SIZE 4
 #define NFC_START_PAGE 4
 #define NFC_END_PAGE 129
-#define JSON_DOC_SIZE 512
+#define JSON_DOC_SIZE 64
 #define CARD_COOLDOWN_TIME 5000
 
 static PN532Component nfc(2, 3);
 static PN532Controller controller(nfc);
 static PortalController portalController(6, 8);
+static DFPlayerComponent dfplayer(10, 11);
+static DFPlayerController dfplayerController(dfplayer);
 
 enum NFCMode
 {
@@ -23,9 +27,16 @@ enum NFCMode
     WRITE
 };
 
+extern char *__brkval;
+extern char *__heap_start;
+
+int freeMemory() {
+    char top;
+    return &top - (__brkval == 0 ? __heap_start : __brkval);
+}
+
 static NFCMode nfcMode = READ;
 
-// Helper function to print the UID
 void printCardUID(const uint8_t *uid, uint8_t uidLength)
 {
     Serial.print("Found a card! UID Length: ");
@@ -39,24 +50,34 @@ void printCardUID(const uint8_t *uid, uint8_t uidLength)
     Serial.println();
 }
 
-// Helper function to read card data
 String readCardData()
 {
     String cardData = "";
     uint8_t blockData[NFC_BLOCK_SIZE];
+    bool endFound = false;
 
-    for (uint8_t page = NFC_START_PAGE; page <= NFC_END_PAGE; page++)
+    for (uint8_t page = NFC_START_PAGE; page <= NFC_END_PAGE && !endFound; page++)
     {
         if (nfc.readBlock(page, blockData))
         {
             for (uint8_t i = 0; i < NFC_BLOCK_SIZE; i++)
             {
                 char c = (char)blockData[i];
-                if (c == '\0')
+
+                if (c == '\0') {
+                    endFound = true;
                     break;
-                if (c >= 32 && c <= 126) // Printable ASCII range
+                }
+
+                if (c >= 32 && c <= 126)
                 {
                     cardData += c;
+
+                    if (c == '}')
+                    {
+                        endFound = true;
+                        break;
+                    }
                 }
             }
         }
@@ -71,34 +92,44 @@ String readCardData()
     return cardData;
 }
 
-// Helper function to parse and react to card data
+
 void processCardData(const String &cardData)
 {
     Serial.println("Raw Card Data:");
     Serial.println(cardData);
 
-    StaticJsonDocument<JSON_DOC_SIZE> doc;
-    DeserializationError error = deserializeJson(doc, cardData);
+    Serial.print("Free memory before manual parsing: ");
+    Serial.println(freeMemory());
 
-    if (!error)
-    {
-        Serial.println("Parsed JSON Data:");
-        serializeJsonPretty(doc, Serial);
-        Serial.println();
+    String name = "";
+    int id = 0;
+    String color = "";
 
-        // Extract fields from the JSON
-        String name = doc["name"] | "";
-        int level = doc["level"] | 0;
-        String color = doc["color"] | "";
+    int nameStart = cardData.indexOf("\"name\":\"") + 8;
+    int nameEnd = cardData.indexOf("\"", nameStart);
+    if (nameStart > 0 && nameEnd > nameStart)
+        name = cardData.substring(nameStart, nameEnd);
 
-        // Directly call the portal logic
-        portalController.reactToCharacter(name, level, color);
-    }
-    else
-    {
-        Serial.print("Failed to parse JSON: ");
-        Serial.println(error.c_str());
-    }
+    int idStart = cardData.indexOf("\"id\":\"") + 6;
+    int idEnd = cardData.indexOf("\"", idStart);
+    if (idStart > 0 && idEnd > idStart)
+        id = cardData.substring(idStart, idEnd).toInt();
+
+    int colorStart = cardData.indexOf("\"color\":\"") + 9;
+    int colorEnd = cardData.indexOf("\"", colorStart);
+    if (colorStart > 0 && colorEnd > colorStart)
+        color = cardData.substring(colorStart, colorEnd);
+
+    Serial.println("Parsed Data:");
+    Serial.print("Name: ");
+    Serial.println(name);
+    Serial.print("ID: ");
+    Serial.println(id);
+    Serial.print("Color: ");
+    Serial.println(color);
+
+    portalController.reactToCharacter(name, id, color);
+    dfplayerController.playCharacterAudio(String(id));
 }
 
 static void interactionTask()
@@ -164,8 +195,8 @@ static void interactionTask()
 void initializeInteractionTask()
 {
     nfc.begin();
-    portalController.begin(); // Initialize the portal controller
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
-
+    portalController.begin();
+    dfplayer.begin();
+    dfplayer.testFileCount(1);
     interactionTask();
 }
