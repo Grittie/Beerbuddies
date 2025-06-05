@@ -6,6 +6,11 @@
 #include "tasks/interaction_task.h"
 #include "components/dfplayer.h"
 #include "controllers/dfplayer_controller.h"
+#include "components/sk6812.h"
+#include "controllers/sk6812_controller.h"
+
+static SK6812Component sk6812(4, 24); // Pin 4, 24 LEDs
+static SK6812Controller sk6812Controller(sk6812);
 
 #define BUTTON_PIN 18
 #define NFC_UID_MAX_LENGTH 7
@@ -145,6 +150,10 @@ static void interactionTask()
     {
         if (nfc.detectCard(uid, &uidLength))
         {
+            // Rapid circles while reading the card
+            sk6812Controller.cycleWhite(); // Rapid cycling effect
+            delay(500);
+
             if (uidLength == lastUidLength && memcmp(uid, lastUid, uidLength) == 0)
             {
                 unsigned long currentTime = millis();
@@ -161,6 +170,28 @@ static void interactionTask()
 
                     String cardData = readCardData();
                     processCardData(cardData);
+
+                    // Parse color and spin rapidly 5 times
+                    String color = ""; // Extracted from cardData
+                    int colorStart = cardData.indexOf("\"color\":\"") + 9;
+                    int colorEnd = cardData.indexOf("\"", colorStart);
+                    if (colorStart > 0 && colorEnd > colorStart)
+                        color = cardData.substring(colorStart, colorEnd);
+
+                    Serial.print("Color: ");
+                    Serial.println(color);
+
+                    uint8_t red = 0, green = 0, blue = 0;
+                    if (color == "red") { red = 255; }
+                    else if (color == "green") { green = 255; }
+                    else if (color == "blue") { blue = 255; }
+                    // Add more colors as needed
+
+                    sk6812Controller.setColor(red, green, blue);
+                    for (int i = 0; i < 5; i++) {
+                        sk6812Controller.cycleWhite(); // Spin rapidly
+                    }
+                    sk6812Controller.turnOff(); // Turn off LEDs
 
                     delay(1000);
                 }
@@ -186,7 +217,41 @@ static void interactionTask()
             String cardData = readCardData();
             processCardData(cardData);
 
+            // Parse color and spin rapidly 5 times
+            String color = ""; // Extracted from cardData
+            int colorStart = cardData.indexOf("\"color\":\"") + 9;
+            int colorEnd = cardData.indexOf("\"", colorStart);
+            if (colorStart > 0 && colorEnd > colorStart)
+                color = cardData.substring(colorStart, colorEnd);
+
+            Serial.print("Color: ");
+            Serial.println(color);
+
+            uint8_t red = 0, green = 0, blue = 0;
+            if (color == "red") { red = 255; }
+            else if (color == "green") { green = 255; }
+            else if (color == "blue") { blue = 255; }
+            // Add more colors as needed
+
+            sk6812Controller.setColor(red, green, blue);
+            for (int i = 0; i < 5; i++) {
+                sk6812Controller.cycleWhite(); // Spin rapidly
+            }
+            sk6812Controller.turnOff(); // Turn off LEDs
+
             delay(1000);
+        }
+        else
+        {
+            // Breathing effect when no card is detected
+            for (int brightness = 0; brightness <= 255; brightness += 5) {
+                sk6812Controller.setColor(brightness, brightness, brightness); // Gradually increase brightness
+                delay(30);
+            }
+            for (int brightness = 255; brightness >= 0; brightness -= 5) {
+                sk6812Controller.setColor(brightness, brightness, brightness); // Gradually decrease brightness
+                delay(30);
+            }
         }
         delay(500);
     }
